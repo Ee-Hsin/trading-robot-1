@@ -17,9 +17,8 @@ the higher the frequency as well.
 <br>
 Additionally, the entry and exit rules I defined are based on a fixed TP  and trailing SL, these are what fit my trading style, feel free to change that though. 
 <br>
-I also did not implement a timer to make the EA close by itself before weekends, or at market close when spreads widen. If you want to, you can implement that yourself. 
-The EA does not have the feature because the virtual machine I host this EA on closes it at those times for me. If you are not using a virtual machine to run the EA, 
-then either close it manually every evening and weekend, or add the code yourself.
+I use a VPS to run the bot that way I don't have to worry about closing it. Since I mainly trade on H4 and D1 timeframes, I do not need to worry
+about holding over weekends or wide spreads during the 45 minute period right before and after the NYSE Market closes.
 
 
 <b>NOTES: </b> 

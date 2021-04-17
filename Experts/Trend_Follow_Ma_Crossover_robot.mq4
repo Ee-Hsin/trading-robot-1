@@ -4,7 +4,7 @@
 //|                                       https://github.com/Ee-Hsin |
 //+------------------------------------------------------------------+
 #property copyright "Ee Hsin"
-#property link      "https://github.com/Ee-Hsin"
+#property link      "https://www.mql5.com"
 #property version   "1.00"
 #property strict
 #include <CustomFunctions1.mqh>
@@ -18,6 +18,9 @@ input double riskPerTrade = 0.02; //0.02 corresponds to a 2% risk per trade.
 input int tradingTimeFrame = 240; //1 corresponds to 1 minute, so this 240 is Every 4 Hours.
 input double stopLossDistanceInAtr = 3;
 input double tpDistanceInAtr = 8;
+input int atrPeriod = 14;
+input int minAtrInPips = 5;//The min. pip value ATR can be.
+extern double Slippage=3; //Put the allowed Slippage in pips.
 int openOrderID;
 
 
@@ -28,6 +31,36 @@ int OnInit()
   {
 //---
    Alert("Initialized Trend Following with MA Crossover strategy trading robot");
+   
+   // Normalization of the slippage (If Broker has 3 or 5 digits, it means that the broker allows mini pips), so we should multiply slippage by 10.
+   //If the broker only offers 2 or 4, it measn the broker does not have mini pips, so if we put a value of 1, it means 1 pip instead of 1 mini-pip.
+   if(Digits==3 || Digits==5){
+      Slippage=Slippage*10;
+   }
+   double ATR = NormalizeDouble(iATR(NULL,tradingTimeFrame,atrPeriod,1),_Digits);
+   
+                  //Calculate initial stop loss
+               double stopLoss = Ask - ATR * stopLossDistanceInAtr;
+               stopLoss = NormPrice(stopLoss);
+               Alert(stopLoss);
+               stopLoss = NormalizeDouble(stopLoss,_Digits);
+               Alert(stopLoss);
+               
+               //Calculate Take Profit:
+               double takeProfit = Ask + ATR * tpDistanceInAtr;
+               //takeProfit = NormPrice(takeProfit);
+               Alert(takeProfit);
+               
+               //Calculate Lot Size:
+               double optimalLotSize = OptimalLotSize(riskPerTrade,Ask,stopLoss);
+               Alert(optimalLotSize);
+               
+               openOrderID = OrderSend(NULL,OP_BUY,0.01,Ask,Slippage,stopLoss,takeProfit,NULL,magicNB);
+               
+               Alert(ATR);
+               Alert(minAtrInPips * GetPipValue());
+               Alert(ATR > minAtrInPips * GetPipValue());
+   
    
 //---
    return(INIT_SUCCEEDED);
@@ -48,6 +81,16 @@ void OnDeinit(const int reason)
             if (OrderMagicNumber() == magicNB)
             {
                //CLOSE THE ORDERS
+               int orderType = OrderType();// Short = 1, Long = 0
+               
+               //If it is a Short, we have to buy back at the Ask.
+               if (orderType == 1){
+                  bool Res = OrderClose(OrderTicket(),OrderLots(),Ask,Slippage,clrNONE);
+               //If it is a Long, we have to buy back at the Bid.
+               } else if(orderType ==0){
+                  bool Res = OrderClose(OrderTicket(),OrderLots(),Bid,Slippage,clrNONE);
+               } 
+               
             }
          }
    }
@@ -60,8 +103,7 @@ void OnDeinit(const int reason)
 void OnTick()
   {
 //---
-   //Don't forget to Normalize Double when needed.
-
+   //STEPS:
    //Check for candle refresh with While loop
    //Check for whether it can trade, if auto trading not on, alert user
    //Inside Loop, check for open Orders first. If there alr is an order, update the order SL based on Trailing EMA
@@ -90,13 +132,13 @@ void OnTick()
                   //Short, so if stopLossEma is smaller than currStoploss by more than 1.5 pips, then only update.
                   if (orderType == 1 && (stopLossEma < currStopLoss) && (slDistance > (GetPipValue() * 1.5))){
                      
-                     bool Res = OrderModify(openOrderID,OrderOpenPrice(),stopLossEma,OrderTakeProfit(),0);
+                     bool Res = OrderModify(OrderTicket(),OrderOpenPrice(),stopLossEma,OrderTakeProfit(),0);
                      CheckOrderStatus(Res, openOrderID);
                      
                   //Long, so if stopLossEma is bigger than currStopLoss by more than 1.5 pips, then only update.
                   } else if (orderType == 0 && (stopLossEma > currStopLoss) && (slDistance > (GetPipValue() * 1.5))) {
                      
-                     bool Res = OrderModify(openOrderID,OrderOpenPrice(),stopLossEma,OrderTakeProfit(),0);
+                     bool Res = OrderModify(OrderTicket(),OrderOpenPrice(),stopLossEma,OrderTakeProfit(),0);
                      CheckOrderStatus(Res, openOrderID);
                   }
                   
@@ -114,18 +156,46 @@ void OnTick()
             double smallEma = NormalizeDouble(iMA(NULL,tradingTimeFrame,smallEmaPeriod,0,MODE_EMA,PRICE_CLOSE,1),_Digits);
             double bigEma = NormalizeDouble(iMA(NULL,tradingTimeFrame,bigEmaPeriod,0,MODE_EMA,PRICE_CLOSE,1),_Digits);
             
+            double ATR = NormalizeDouble(iATR(NULL,tradingTimeFrame,atrPeriod,1),_Digits);
             //Check for crossover:
             
-            //Check if smallEma is now above big Ema, but prev was below or equal to prevBigEma.
+            //Check if smallEma is now above big Ema, but prev was below or equal to prevBigEma .
             //Go Long:
-            if (smallEma > bigEma && prevSmallEma <= prevBigEma) {
+            if (smallEma > bigEma && prevSmallEma <= prevBigEma && ATR > (minAtrInPips * GetPipValue())) {
+            
+               //Calculate initial stop loss
+               double stopLoss = Ask - ATR * stopLossDistanceInAtr;
+               stopLoss = NormPrice(stopLoss);
                
+               //Calculate Take Profit:
+               double takeProfit = Ask + ATR * tpDistanceInAtr;
+               takeProfit = NormPrice(takeProfit);
+               
+               //Calculate Lot Size:
+               double optimalLotSize = OptimalLotSize(riskPerTrade,Ask,stopLoss);
+                           
+               openOrderID = OrderSend(NULL,OP_BUY,optimalLotSize,Ask,Slippage,stopLoss,takeProfit,NULL,magicNB);
+               if(openOrderID < 0) Alert("order rejected. Order error: " + GetLastError());
             }
             
             //Check if smallEma is now below bigEma, but prev was above or equal to prevBigEma.
             //Go Short:
-            if (smallEma < bigEma && prevSmallEma >= prevBigEma) {
-            
+            if (smallEma < bigEma && prevSmallEma >= prevBigEma && ATR > (minAtrInPips * GetPipValue())) {
+               
+               //Calculate initial stop loss
+               double stopLoss = Bid + ATR * stopLossDistanceInAtr;
+               stopLoss = NormPrice(stopLoss);
+               
+               //Calculate Take Profit:
+               double takeProfit = Bid - ATR * tpDistanceInAtr;
+               takeProfit = NormPrice(takeProfit);
+               
+               //Calculate Lot Size:
+               double optimalLotSize = OptimalLotSize(riskPerTrade,Bid,stopLoss);
+               
+               openOrderID = OrderSend(NULL,OP_SELL,optimalLotSize,Bid,Slippage,stopLoss,takeProfit,NULL,magicNB);
+               if(openOrderID < 0) Alert("order rejected. Order error: " + GetLastError());
+               
             }
             
          }
