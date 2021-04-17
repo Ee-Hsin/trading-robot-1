@@ -62,10 +62,9 @@ double OptimalLotSize(double maxRiskPrc, int maxLossInPips)
 {
 
   double accEquity = AccountEquity();
-  Alert("accEquity: " + accEquity);
+  Print("accEquity: " + accEquity);
   
   double lotSize = MarketInfo(NULL,MODE_LOTSIZE);
-  Alert("lotSize: " + lotSize);
   
   double tickValue = MarketInfo(NULL,MODE_TICKVALUE);
   
@@ -75,21 +74,29 @@ double OptimalLotSize(double maxRiskPrc, int maxLossInPips)
    tickValue = tickValue /100;
   }
   
-  Alert("tickValue: " + tickValue);
   
   double maxLossDollar = accEquity * maxRiskPrc;
-  Alert("maxLossDollar: " + maxLossDollar);
+  Print("maxLossDollar: " + maxLossDollar);
   
   double maxLossInQuoteCurr = maxLossDollar / tickValue;
-  Alert("maxLossInQuoteCurr: " + maxLossInQuoteCurr);
+  Print("maxLossInQuoteCurr: " + maxLossInQuoteCurr);
   
   double optimalLotSize = NormalizeDouble(maxLossInQuoteCurr /(maxLossInPips * GetPipValue())/lotSize,2);
   
+  //Mini Lot ($10,000)
+  if (MarketInfo(NULL,MODE_LOTSIZE) == 10000){
+   return optimalLotSize * 10;
+  //Micro Lot ($1,000)
+  } else if (MarketInfo(NULL,MODE_LOTSIZE) == 1000){
+   return optimalLotSize * 100;
+  }
+  
+  //If Standard lot ($100,000)
   return optimalLotSize;
  
 }
 
-//Basically uses the function above but takes the difference between and entry and stop loss price before passing in the maxLossInPips
+//Basically overloadsues the function above but takes the difference between and entry and stop loss price before passing in the maxLossInPips
 double OptimalLotSize(double maxRiskPrc, double entryPrice, double stopLoss)
 {
    int maxLossInPips = MathAbs(entryPrice - stopLoss)/GetPipValue();
@@ -124,9 +131,9 @@ bool IsNewCandle()
 
 }
 
-bool CheckOrderStatus( bool res){
+void CheckOrderStatus( bool res, int openOrderID){
     //Checking the result of the OrderModify we send.
-    if (Res==true)                     
+    if (res==true)                     
     {
         Print("Order modified: ",openOrderID);
                                 
@@ -134,4 +141,11 @@ bool CheckOrderStatus( bool res){
     {
         Print("Unable to modify order: ",openOrderID);
     }   
+}
+
+double NormPrice(double price)
+{
+   double tickSize=MarketInfo(Symbol(),MODE_TICKSIZE);
+   price=NormalizeDouble(MathRound(price/tickSize)*tickSize,Digits);
+   return price;
 } 

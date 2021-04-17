@@ -19,7 +19,7 @@ input int tradingTimeFrame = 240; //1 corresponds to 1 minute, so this 240 is Ev
 input double stopLossDistanceInAtr = 3;
 input double tpDistanceInAtr = 8;
 input int atrPeriod = 14;
-input int minAtrInPips = 5;//The min. pip value ATR can be.
+input int minAtrInPips = 5;
 extern double Slippage=3; //Put the allowed Slippage in pips.
 int openOrderID;
 
@@ -36,31 +36,7 @@ int OnInit()
    //If the broker only offers 2 or 4, it measn the broker does not have mini pips, so if we put a value of 1, it means 1 pip instead of 1 mini-pip.
    if(Digits==3 || Digits==5){
       Slippage=Slippage*10;
-   }
-   double ATR = NormalizeDouble(iATR(NULL,tradingTimeFrame,atrPeriod,1),_Digits);
-   
-                  //Calculate initial stop loss
-               double stopLoss = Ask - ATR * stopLossDistanceInAtr;
-               stopLoss = NormPrice(stopLoss);
-               Alert(stopLoss);
-               stopLoss = NormalizeDouble(stopLoss,_Digits);
-               Alert(stopLoss);
-               
-               //Calculate Take Profit:
-               double takeProfit = Ask + ATR * tpDistanceInAtr;
-               //takeProfit = NormPrice(takeProfit);
-               Alert(takeProfit);
-               
-               //Calculate Lot Size:
-               double optimalLotSize = OptimalLotSize(riskPerTrade,Ask,stopLoss);
-               Alert(optimalLotSize);
-               
-               openOrderID = OrderSend(NULL,OP_BUY,0.01,Ask,Slippage,stopLoss,takeProfit,NULL,magicNB);
-               
-               Alert(ATR);
-               Alert(minAtrInPips * GetPipValue());
-               Alert(ATR > minAtrInPips * GetPipValue());
-   
+   }   
    
 //---
    return(INIT_SUCCEEDED);
@@ -175,7 +151,7 @@ void OnTick()
                double optimalLotSize = OptimalLotSize(riskPerTrade,Ask,stopLoss);
                            
                openOrderID = OrderSend(NULL,OP_BUY,optimalLotSize,Ask,Slippage,stopLoss,takeProfit,NULL,magicNB);
-               if(openOrderID < 0) Alert("order rejected. Order error: " + GetLastError());
+               if(openOrderID < 0) Print("order rejected. Order error: " + GetLastError());
             }
             
             //Check if smallEma is now below bigEma, but prev was above or equal to prevBigEma.
@@ -194,7 +170,7 @@ void OnTick()
                double optimalLotSize = OptimalLotSize(riskPerTrade,Bid,stopLoss);
                
                openOrderID = OrderSend(NULL,OP_SELL,optimalLotSize,Bid,Slippage,stopLoss,takeProfit,NULL,magicNB);
-               if(openOrderID < 0) Alert("order rejected. Order error: " + GetLastError());
+               if(openOrderID < 0) Print("order rejected. Order error: " + GetLastError());
                
             }
             

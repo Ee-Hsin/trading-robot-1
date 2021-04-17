@@ -7,7 +7,6 @@ since Sept 2020. This is a format of the EA I use, it is not the same as the one
 However, this robot provides a useful framework for my trading strategy, and one can easily customize it to make it fit their trading style.
 
 
-
 <b>Instructions to Use</b>
 <br>
 Auto Trading has to be on, trading stategy will be located in the Experts folder. Fill up the inputs for the technical indicators. 
@@ -27,7 +26,10 @@ about holding over weekends or wide spreads during the 45 minute period right be
    Lot Size is also dependent upon broker, some brokers have standard lots, so 1 = $100,000 
    of the given currency, and so the smallest order is 0.01 = $1,000 of the given currency. While other brokers don't have this issue. 
    
-   I have written the code for this based on Brokers who show mini-pips, and have lot size of $100,000 (standard lot)
+   I have written the code for this to work on Brokers who offer mini-pips and non-mini pips, as well as Brokers who offer Standard ($100,000)
+   ,mini ($10,000) and micro($1,000) lots.
       
-   
-   
+<b>Important Additional note:</b>
+<br>
+This bot will NOT work if deposit currency is in JPY. If your deposit is in JPY, then modify the position sizing function OptimalLotSize
+to fit your criteria.
