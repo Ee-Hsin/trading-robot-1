@@ -123,3 +123,15 @@ bool IsNewCandle()
    }
 
 }
+
+bool CheckOrderStatus( bool res){
+    //Checking the result of the OrderModify we send.
+    if (Res==true)                     
+    {
+        Print("Order modified: ",openOrderID);
+                                
+    }else
+    {
+        Print("Unable to modify order: ",openOrderID);
+    }   
+} 
