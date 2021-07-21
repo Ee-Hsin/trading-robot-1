@@ -36,4 +36,3 @@ to fit your criteria.
 
 **Proof of Performance:**
 ![growth_chart_2020_forex_954738_performance](https://user-images.githubusercontent.com/75463789/126431225-38122600-433d-4a48-92a2-1fd34713e00a.JPG)
-![peakPerformanceForexGrowthChart](https://user-images.githubusercontent.com/75463789/126431233-3ec06072-3e02-4a3d-986e-09c2eb6a2504.JPG)
