@@ -3,7 +3,7 @@
 <b>Overview</b>
 </br>
 This Trading Robot is based on a MA Crossover strategy, I have been using this strategy to follow trends successfully on the H1, H4 and D1 timeframes 
-since Sept 2020. This is a format of the EA I use, it is not the same as the one I use. I will not reveal the exact values I use and the entirety of my entry and exit rules. 
+since July 2020. This is a format of the EA I use, it is not the same as the one I use. I will not reveal the exact values I use and the entirety of my entry and exit rules. 
 However, this robot provides a useful framework for my trading strategy, and one can easily customize it to make it fit their trading style.
 
 
